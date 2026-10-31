@@ -40,8 +40,8 @@
   "guide": [
     {
       "title": "Скачать приложение Amnezia VPN",
-      "text": "На Android переходите по ссылки скачивайте: https://play.google.com/store/apps/details?id=org.amnezia.vpn&pcampaignid=web_share\nНа iPhone (любой регион кроме России):\nhttps://apps.apple.com/us/app/amneziavpn/id1600529900\nНа iPhone (регион Россия): https://apps.apple.com/ru/app/defaultvpn/id6744725017",
-      "image": ""
+      "text": "Если у вас Android, откройте Google Play. Если у вас iPhone, убедитесь, что регион вашего App Store — США или любая другая страна, кроме России. Затем введите в поиске «Amnezia VPN». Внешний вид приложения показан на первом изображении.\n\nЕсли регион вашего App Store — Россия, скачайте приложение «Default VPN». Его значок показан на втором изображении.",
+      "image": "guide/img-1793452533223.jpg"
     }
   ]
 }
