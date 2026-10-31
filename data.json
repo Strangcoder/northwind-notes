@@ -41,57 +41,71 @@
       "url": "vpn://AAANBHjatVdbT-M8EH3nV1TRvkFL7m3RslJbYOmNDS13gio3cSFfEyebOKUU8d8_exxCAylSHzaAmPGZGY-dc1z3dafCHskJCUUewXEiHVTuYYw_r7kFUej5kcHFQQCOvARNfdwJw7mHeQkpJNLe17hThWNKKaRySC2FNA5ppZDOIb0UwsjFsRWHFDvUC0kfv8Dk0W_DOq8f0ekqnZ4tGicDj5AreRVTxYp6c7Xtd67xyctTaDwflpXtwhJ-xhX1189pRV42jIbMHiX7E49pNk3NdMxZ3TB1WWP2zHTlPM6RZWc9R5ENxP7pums0tLpW_1U6MWxQKaJtRPSNiLEJ6TkcMUqhAC0BlMtRj8AOl6J9jCPkewt84QU4TCnUqSql8wzR8hQRN3lCc9yiFAcRBVIpRlUtLT5i0WFwESPPFxTewL8R_o-RoTWjOOZtiJpyVWmUV8Vz_FIMllmwujl4bW1atV4WNhYKKOX5WP0G077B9M2YjxI6YeqeeVy60qv9Sau2dGCzzbKlPZupEzxFOCo4qnA0cDTh6ODowvmqMlFkC5lBoa6Y_B8LC6bqOTCVIRzGaeHKme8RsQLhf-atiGXEBbSMqSKbUxVCitxc3-9PbMzygI4Zvs6_rCkg4Ae83hWjHADj7D2KdzdWC55W8PR1D_l--IzdiRfxNu9tSa7Bz76Y7-CAGw_McnwPE9p1Idm9bBjmSfvP2LppjfrqY3xz1wuXyu7oZVUf0L_95uXd6Glw2cTXsnjTIpvNkq2o1qgpNUVZx6LYW0zmGZV6nRW5QdO-1ZZTq2Gmx_N-f9ynwdVsP7klS1Mmt_Ld01Amq8vCBFE6zWts3yRIBnLvu4S9ghly8INtk5brxjhJKoeVvPN9TWXA0dmYDf6wRt1ha3Q7Ye5e5cf4uPPn7CjzWZDFFoYoZiphsVstzCY9h-UY3GAUhfnBRks-zO2xwkd5L2M1t7Tc0t-tU4jjBg-DER6lcYMH6czo8ph_LUY239fjg_e2zeFhk6JOYGeESjIo0whfIlMIHyzojidkqrPJZ7nzveVit0mZ1CG1KmYqyJwBTOSMFIXD9n2U_d5bGMecT1Y69T1HrNtpprvNa-wOOua8vXQjozU4Tq9Wj2GPXJ2cH790W5GuBK3zxcXwEMiEWTcxdkV287LbNg30GGArandmvy_CWy3eDYb-o3Oha2nSbg-DG9VVT_dbPLsl1N61eFu50vcqIHObHBM3Cj3CN0BpGjVVlmtKvaaq2oHObB5hsXV6CWVSyzeN08moany7QEVPYULP0PvZVSgDeEBTAWl1EwaivCaTLo4mUFV8EEFdiAljft5BG9xN5rnMt9oCXivB8QLHhaNiq5cgvZV96PIO4V7KWywNYIQPndCfLPh6Q7g2abXSe3GSTgmmEySOHXEJgXNH_iba8dwYrtOlN2MaI5LwHifQBw9M3UgqBL4V8z6-IPBoFBC88lCVfR9QP9LewHoQiZKLZyj1aWdjXh6XOLEX0WwXThFlhFZylCTiwlSDn7VhcVcC2ubDszAOEF3bVCUD3nkIOQUaSjtvO_8DOG5lhQ"
     }
   ],
-  "guide": [
-    {
-      "title": "Скачать приложение Amnezia VPN",
-      "text": "Если у вас Android, откройте Google Play. Если у вас iPhone, убедитесь, что регион вашего App Store — США или любая другая страна, кроме России. Затем введите в поиске «Amnezia VPN». Внешний вид приложения показан на первом изображении.\n\nЕсли регион вашего App Store — Россия, скачайте приложение «Default VPN». Его значок показан на втором изображении.",
-      "image": "guide/img-1793452533223.jpg"
-    },
-    {
-      "title": "Скопировать ключ",
-      "text": "После установки приложения перейдите на этот сайт и найдите своё имя. Напротив него будет кнопка «Копировать» — нажмите на неё.",
-      "image": ""
-    },
-    {
-      "title": "Amnezia VPN или Default VPN",
-      "text": "В следующих шагах представлены инструкции по добавлению ключа в приложения Amnezia VPN и Default VPN. Выберите инструкцию для своего приложения и следуйте дальнейшим шагам.",
-      "image": ""
-    },
-    {
-      "title": "Amnezia VPN - Шаг 1",
-      "text": "Откройте приложение и нажмите кнопку «Приступим».",
-      "image": ""
-    },
-    {
-      "title": "Amnezia VPN - Шаг 2",
-      "text": "Рядом с полем «Вставьте ключ» нажмите кнопку «Вставить». Ключ автоматически скопируется в поле.",
-      "image": "guide/img-1793453327767.jpg"
-    },
-    {
-      "title": "Amnezia VPN - Шаг 3",
-      "text": "После этого откроется экран с круглой кнопкой «Подключиться». Нажмите на неё.\n\nТелефон может запросить разрешение на подключение VPN. В этом случае нажмите «Разрешить».\n\nПосле успешного подключения надпись на круглой кнопке изменится с «Подключиться» на «Подключено».\n\nГотово! VPN успешно настроен и готов к использованию.",
-      "image": "guide/img-1793453863944.jpg"
-    },
-    {
-      "title": "Default VPN - Шаг 1",
-      "text": "Откройте приложение Default VPN. На экране вы увидите интерфейс, представленный на прикреплённом изображении.",
-      "image": "guide/img-1793454725250.jpg"
-    },
-    {
-      "title": "Default VPN - Шаг 2",
-      "text": "Нажмите на кнопку «+».",
-      "image": "guide/img-1793454797945.jpg"
-    },
-    {
-      "title": "Default VPN - Шаг 3",
-      "text": "Вы попадёте в раздел, представленный на прикреплённом изображении. Нажмите кнопку «Вставить» — ссылка, которую вы ранее скопировали на сайте, автоматически вставится в поле. После этого нажмите синюю кнопку «Добавить».",
-      "image": "guide/img-1793454740299.jpg"
-    },
-    {
-      "title": "Default VPN - Шаг 4",
-      "text": "Вы попадёте на экран, представленный на прикреплённом изображении. Нажмите кнопку «Подключиться».\n\nТелефон может запросить разрешение на использование приложения в качестве VPN. В этом случае нажмите «Разрешить».\n\nПосле успешного подключения кнопка «Подключиться» изменит надпись на «Подключено» и станет синей.\n\nГотово! VPN успешно настроен и работает.",
-      "image": "guide/img-1793454808821.jpg"
-    }
-  ],
+  "guide": {
+    "install": [
+      {
+        "title": "Скачать приложение Amnezia VPN",
+        "text": "Если у вас Android, откройте Google Play. Если у вас iPhone, убедитесь, что регион вашего App Store — США или любая другая страна, кроме России. Затем введите в поиске «Amnezia VPN». Внешний вид приложения показан на первом изображении.\n\nЕсли регион вашего App Store — Россия, скачайте приложение «Default VPN». Его значок показан на втором изображении.",
+        "image": "guide/img-1793452533223.jpg"
+      },
+      {
+        "title": "Скопировать ключ",
+        "text": "После установки приложения перейдите на этот сайт и найдите своё имя. Напротив него будет кнопка «Копировать» — нажмите на неё.",
+        "image": ""
+      },
+      {
+        "title": "Amnezia VPN или Default VPN",
+        "text": "В следующих шагах представлены инструкции по добавлению ключа в приложения Amnezia VPN и Default VPN. Выберите инструкцию для своего приложения и следуйте дальнейшим шагам.",
+        "image": ""
+      },
+      {
+        "title": "Amnezia VPN - Шаг 1",
+        "text": "Откройте приложение и нажмите кнопку «Приступим».",
+        "image": ""
+      },
+      {
+        "title": "Amnezia VPN - Шаг 2",
+        "text": "Рядом с полем «Вставьте ключ» нажмите кнопку «Вставить». Ключ автоматически скопируется в поле.",
+        "image": "guide/img-1793453327767.jpg"
+      },
+      {
+        "title": "Amnezia VPN - Шаг 3",
+        "text": "После этого откроется экран с круглой кнопкой «Подключиться». Нажмите на неё.\n\nТелефон может запросить разрешение на подключение VPN. В этом случае нажмите «Разрешить».\n\nПосле успешного подключения надпись на круглой кнопке изменится с «Подключиться» на «Подключено».\n\nГотово! VPN успешно настроен и готов к использованию.",
+        "image": "guide/img-1793453863944.jpg"
+      },
+      {
+        "title": "Default VPN - Шаг 1",
+        "text": "Откройте приложение Default VPN. На экране вы увидите интерфейс, представленный на прикреплённом изображении.",
+        "image": "guide/img-1793454725250.jpg"
+      },
+      {
+        "title": "Default VPN - Шаг 2",
+        "text": "Нажмите на кнопку «+».",
+        "image": "guide/img-1793454797945.jpg"
+      },
+      {
+        "title": "Default VPN - Шаг 3",
+        "text": "Вы попадёте в раздел, представленный на прикреплённом изображении. Нажмите кнопку «Вставить» — ссылка, которую вы ранее скопировали на сайте, автоматически вставится в поле. После этого нажмите синюю кнопку «Добавить».",
+        "image": "guide/img-1793454740299.jpg"
+      },
+      {
+        "title": "Default VPN - Шаг 4",
+        "text": "Вы попадёте на экран, представленный на прикреплённом изображении. Нажмите кнопку «Подключиться».\n\nТелефон может запросить разрешение на использование приложения в качестве VPN. В этом случае нажмите «Разрешить».\n\nПосле успешного подключения кнопка «Подключиться» изменит надпись на «Подключено» и станет синей.\n\nГотово! VPN успешно настроен и работает.",
+        "image": "guide/img-1793454808821.jpg"
+      }
+    ],
+    "update": [
+      {
+        "title": "Amnezia VPN",
+        "text": "В следующих шагах описан процесс обновления ключа в приложении «Amnezia VPN».",
+        "image": ""
+      },
+      {
+        "title": "Скопируйте новую ссылку",
+        "text": "Нажмите «Копировать ссылку» и вставьте её вместо старой.",
+        "image": ""
+      }
+    ]
+  },
   "status": "yellow"
 }
