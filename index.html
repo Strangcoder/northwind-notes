@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark" style="color-scheme: dark;"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Найди своё имя и скопируй ссылку</title>
+<style>
+:root{--bg:#f4f5f7;--surface:#fff;--text:#15181e;--muted:#5b6370;--line:#e2e5ea;--accent:#1f5fd6;--accent-ink:#fff;--ok:#16794c;--danger:#c0281f;--shadow:0 1px 2px rgba(20,24,30,.06),0 8px 24px rgba(20,24,30,.06);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111317;--surface:#1a1d23;--text:#eef0f4;--muted:#9aa3b2;--line:#2b303a;--accent:#6ea0ff;--accent-ink:#0b1220;--ok:#4cc38a;--danger:#ff7b72;--shadow:none;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111317;--surface:#1a1d23;--text:#eef0f4;--muted:#9aa3b2;--line:#2b303a;--accent:#6ea0ff;--accent-ink:#0b1220;--ok:#4cc38a;--danger:#ff7b72;--shadow:none;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:28px 16px 56px}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px}
+h1{font-size:1.65rem;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+.sub{margin:0;color:var(--muted)}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:10px;padding:9px 14px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--danger)}
+.search{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:14px 16px;font:inherit;box-shadow:var(--shadow);margin-bottom:14px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:.9rem;color:var(--muted);font-weight:600;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+td{padding:12px 18px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.name{font-weight:600;overflow-wrap:anywhere}
+th.act,td.act{text-align:right;white-space:nowrap}
+.copy{min-width:190px;min-height:46px;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:700;padding:8px 16px;transition:background .15s,border-color .15s}
+.copy.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.copy.fail{background:var(--danger);border-color:var(--danger);color:#fff}
+.edit{margin-left:8px}
+.empty{padding:28px 18px;color:var(--muted);text-align:center}
+.scrim{position:fixed;inset:0;background:rgba(10,12,16,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.dlg{background:var(--surface);color:var(--text);border-radius:16px;width:100%;max-width:420px;padding:22px;border:1px solid var(--line)}
+.dlg h2{margin:0 0 14px;font-size:1.25rem}
+label{display:block;font-weight:600;margin:12px 0 6px}
+.dlg input{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:12px 14px;font:inherit}
+.err{color:var(--danger);min-height:1.4em;margin:10px 0 0;font-size:.95rem}
+.row{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.row .spacer{margin-right:auto}
+@media(max-width:520px){th,td{padding:12px 12px}.copy{min-width:0;width:100%}.edit{margin:8px 0 0}th.act,td.act{text-align:right}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.note{color:var(--ok);margin:0 0 12px;font-weight:600}
+.hint{color:var(--muted);font-size:.92rem;margin:8px 0 0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// Настройки. Обычно менять ничего не нужно: репозиторий определяется по адресу github.io.
+const CFG = { repo: "", branch: "", path: "data.json" }; // repo в формате "логин/репозиторий"
+
+const app = document.getElementById("app");
+let DATA = {users: []}, query = "", modal = null, admin = false, msg = "", msgOk = false, loadErr = "";
+let token = ""; try { token = localStorage.getItem("gh_token") || ""; } catch (e) {}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const enc = s => { let r = ""; new TextEncoder().encode(s).forEach(x => r += String.fromCharCode(x)); return btoa(r); };
+const dec = b => new TextDecoder().decode(Uint8Array.from(atob(b.replace(/\n/g, "")), c => c.charCodeAt(0)));
+
+function repo() {
+  if (CFG.repo) return CFG.repo;
+  const h = location.hostname;
+  if (!h.endsWith(".github.io")) return "";
+  const p = location.pathname.split("/")[1];
+  return h.split(".")[0] + "/" + (p && !p.includes(".") ? p : h);
+}
+function apiUrl() {
+  if (!repo()) throw new Error("не удалось определить репозиторий (укажите его в CFG.repo в начале скрипта)");
+  return `https://api.github.com/repos/${repo()}/contents/${CFG.path}`;
+}
+async function gh(url, opts = {}) {
+  const r = await fetch(url, {...opts, headers: {Accept: "application/vnd.github+json", Authorization: "Bearer " + token, ...(opts.headers || {})}});
+  if (!r.ok) {
+    const e = new Error(r.status === 401 ? "токен не подходит" : r.status === 403 ? "у токена нет права записи в этот репозиторий" : r.status === 404 ? "репозиторий или файл data.json не найден" : r.status === 409 || r.status === 422 ? "список успел измениться, обновите страницу и повторите" : "ошибка GitHub " + r.status);
+    e.status = r.status; throw e;
+  }
+  return r.json();
+}
+const refQ = () => CFG.branch ? "?ref=" + encodeURIComponent(CFG.branch) : "";
+async function loadViaApi() {
+  const g = await gh(apiUrl() + refQ());
+  const d = JSON.parse(dec(g.content));
+  if (!d || !Array.isArray(d.users)) throw new Error("файл data.json повреждён");
+  return d;
+}
+async function loadPublic() {
+  try {
+    const r = await fetch(CFG.path + "?t=" + Date.now(), {cache: "no-store"});
+    if (!r.ok) throw 0;
+    const d = await r.json(); if (!Array.isArray(d.users)) throw 0;
+    DATA = d; loadErr = "";
+  } catch (e) { loadErr = "Не удалось загрузить список. Обновите страницу чуть позже."; }
+}
+async function persist() {
+  msg = "Сохраняю…"; msgOk = true; render();
+  try {
+    const url = apiUrl();
+    const g = await gh(url + refQ());
+    const body = {message: "Обновление списка", content: enc(JSON.stringify(DATA, null, 2) + "\n"), sha: g.sha};
+    if (CFG.branch) body.branch = CFG.branch;
+    await gh(url, {method: "PUT", body: JSON.stringify(body)});
+    msg = "Сохранено. Для остальных посетителей список обновится примерно через минуту."; msgOk = true;
+  } catch (e) { msg = "Не удалось сохранить: " + e.message + "."; msgOk = false; }
+  render();
+}
+function forget() { token = ""; admin = false; try { localStorage.removeItem("gh_token"); } catch (e) {} }
+
+function rowsHtml() {
+  const q = query.trim().toLowerCase();
+  const list = DATA.users.map((u, i) => ({u, i})).filter(x => x.u.name.toLowerCase().includes(q));
+  if (!list.length) return `<tr><td colspan="2" class="empty">${DATA.users.length ? "Никого не нашли. Проверьте написание имени." : "Список пока пуст."}</td></tr>`;
+  return list.map(({u, i}) => `<tr><td class="name">${esc(u.name)}</td><td class="act"><button class="copy" data-act="copy" data-i="${i}">Копировать ссылку</button>${admin ? `<button class="btn edit" data-act="edit" data-i="${i}">Изменить</button>` : ""}</td></tr>`).join("");
+}
+
+function modalHtml() {
+  if (!modal) return "";
+  if (modal.type === "login") return `<div class="scrim" data-act="close"><form class="dlg" data-form="login"><h2>Вход для администратора</h2><label for="pw">Токен доступа GitHub</label><input id="pw" type="password" autocomplete="off" autofocus><p class="hint">Вставьте токен один раз: он сохранится только в этом браузере.</p><p class="err" id="err"></p><div class="row"><button type="button" class="btn" data-act="close">Отмена</button><button class="btn primary" type="submit">Войти</button></div></form></div>`;
+  if (modal.type === "confirm") return `<div class="scrim" data-act="close"><div class="dlg" role="alertdialog"><h2>Удалить из списка?</h2><p>${esc(DATA.users[modal.idx].name)}</p><div class="row"><button type="button" class="btn" data-act="close" autofocus>Отмена</button><button type="button" class="btn primary" data-act="delok">Да, удалить</button></div></div></div>`;
+  const u = modal.idx == null ? {name: "", url: ""} : DATA.users[modal.idx];
+  return `<div class="scrim" data-act="close"><form class="dlg" data-form="user"><h2>${modal.idx == null ? "Новый человек" : "Изменить"}</h2><label for="nm">Имя</label><input id="nm" value="${esc(u.name)}" autocomplete="off" autofocus><label for="ur">Ссылка</label><input id="ur" value="${esc(u.url)}" autocomplete="off" inputmode="url"><p class="err" id="err"></p><div class="row">${modal.idx == null ? "" : `<button type="button" class="btn danger spacer" data-act="del">Удалить</button>`}<button type="button" class="btn" data-act="close">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></form></div>`;
+}
+
+function render() {
+  app.innerHTML = `<div class="wrap">
+    <div class="top"><div><h1>Найдите своё имя и скопируйте ссылку</h1><p class="sub">Введите имя в поиск, затем нажмите синюю кнопку рядом с ним.</p></div>
+    <button class="btn" data-act="${admin ? "logout" : "login"}">${admin ? "Выйти из админки" : "Админ"}</button></div>
+    ${admin ? `<div class="bar"><button class="btn primary" data-act="add">+ Добавить человека</button></div>` : ""}
+    ${msg ? `<p class="${msgOk ? "note" : "err"}" role="status">${esc(msg)}</p>` : ""}
+    ${loadErr ? `<p class="err" role="alert">${esc(loadErr)}</p>` : ""}
+    <input class="search" id="q" type="search" placeholder="Поиск по имени" value="${esc(query)}" autocomplete="off" aria-label="Поиск по имени">
+    <div class="card"><table><thead><tr><th>Имя</th><th class="act">Ссылка</th></tr></thead><tbody id="rows">${rowsHtml()}</tbody></table></div>
+  </div>${modalHtml()}`;
+  const f = app.querySelector("[autofocus]"); if (f) f.focus();
+}
+
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+  const a = document.createElement("textarea"); a.value = t; a.style.cssText = "position:fixed;opacity:0";
+  document.body.appendChild(a); a.select(); let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  a.remove(); return ok;
+}
+
+app.addEventListener("input", e => { if (e.target.id === "q") { query = e.target.value; document.getElementById("rows").innerHTML = rowsHtml(); } });
+
+app.addEventListener("click", async e => {
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  if (el.classList.contains("scrim") && e.target !== el) return;
+  const act = el.dataset.act, i = el.dataset.i;
+  if (act === "copy") {
+    const ok = await copyText(DATA.users[i].url);
+    el.textContent = ok ? "Скопировано ✓" : "Не удалось скопировать";
+    el.classList.add(ok ? "ok" : "fail");
+    setTimeout(() => { el.textContent = "Копировать ссылку"; el.classList.remove("ok", "fail"); }, 2000);
+  } else if (act === "login") { modal = {type: "login"}; render(); }
+  else if (act === "logout") { forget(); msg = ""; render(); }
+  else if (act === "add") { modal = {type: "form", idx: null}; render(); }
+  else if (act === "edit") { modal = {type: "form", idx: +i}; render(); }
+  else if (act === "close") { modal = null; render(); }
+  else if (act === "del") { modal = {type: "confirm", idx: +(i ?? modal.idx)}; render(); }
+  else if (act === "delok") { DATA.users.splice(modal.idx, 1); modal = null; persist(); }
+});
+
+app.addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.target.dataset.form, err = document.getElementById("err");
+  if (form === "login") {
+    const t = document.getElementById("pw").value.trim();
+    if (!t) { err.textContent = "Вставьте токен."; return; }
+    token = t; err.textContent = "Проверяю…";
+    try {
+      DATA = await loadViaApi(); loadErr = ""; admin = true;
+      try { localStorage.setItem("gh_token", token); } catch (x) {}
+      modal = null; msg = ""; render();
+    } catch (x) { token = ""; err.textContent = "Не получилось войти: " + x.message + "."; }
+  } else {
+    const name = document.getElementById("nm").value.trim(), url = document.getElementById("ur").value.trim();
+    if (!name || !url) { err.textContent = "Заполните имя и ссылку."; return; }
+    if (modal.idx == null) DATA.users.push({name, url}); else DATA.users[modal.idx] = {name, url};
+    modal = null; persist();
+  }
+});
+
+document.addEventListener("keydown", e => { if (e.key === "Escape" && modal) { modal = null; render(); } });
+
+(async () => {
+  render(); await loadPublic(); render();
+  if (token) {
+    try { DATA = await loadViaApi(); loadErr = ""; admin = true; } catch (e) { if (e.status === 401) forget(); }
+    render();
+  }
+})();
+</script>
+</body>
+</html>
