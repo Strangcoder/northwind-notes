@@ -33,7 +33,7 @@ th.act,td.act{text-align:right;white-space:nowrap}
 .copy.fail{background:var(--danger);border-color:var(--danger);color:#fff}
 .edit{margin-left:8px}
 .empty{padding:28px 18px;color:var(--muted);text-align:center}
-.scrim{position:fixed;inset:0;background:rgba(10,12,16,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.scrim{position:fixed;inset:0;background:rgba(10,12,16,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:40}
 .dlg{background:var(--surface);color:var(--text);border-radius:16px;width:100%;max-width:420px;padding:22px;border:1px solid var(--line)}
 .dlg h2{margin:0 0 14px;font-size:1.25rem}
 label{display:block;font-weight:600;margin:12px 0 6px}
@@ -73,6 +73,13 @@ body.open{overflow:hidden}
 .step:last-child{border-bottom:0}
 .step h3{margin:0 0 6px;font-size:1.05rem}
 .step p{margin:0;color:var(--muted)}
+.dlg{max-height:calc(100vh - 32px);overflow-y:auto}
+.dlg textarea{width:100%;min-height:110px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:12px 14px;font:inherit;resize:vertical}
+.dlg img.prev{display:block;max-width:100%;max-height:160px;margin-top:10px;border-radius:10px;border:1px solid var(--line)}
+.dlg img.prev[hidden]{display:none}
+.gadmin{padding:14px 0 0}
+.gedit{margin-top:12px}
+.step p{white-space:pre-line}
 .step img{display:block;width:100%;max-width:360px;margin:12px auto 0;border-radius:12px;border:1px solid var(--line)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 .note{color:var(--ok);margin:0 0 12px;font-weight:600}
@@ -159,6 +166,12 @@ function modalHtml() {
   if (!modal) return "";
   if (modal.type === "login") return `<div class="scrim" data-act="close"><form class="dlg" data-form="login"><h2>Вход для администратора</h2><label for="pw">Токен доступа GitHub</label><input id="pw" type="password" autocomplete="off" autofocus><p class="hint">Вставьте токен один раз: он сохранится только в этом браузере.</p><p class="err" id="err"></p><div class="row"><button type="button" class="btn" data-act="close">Отмена</button><button class="btn primary" type="submit">Войти</button></div></form></div>`;
   if (modal.type === "confirm") return `<div class="scrim" data-act="close"><div class="dlg" role="alertdialog"><h2>Удалить из списка?</h2><p>${esc(DATA.users[modal.idx].name)}</p><div class="row"><button type="button" class="btn" data-act="close" autofocus>Отмена</button><button type="button" class="btn primary" data-act="delok">Да, удалить</button></div></div></div>`;
+  if (modal.type === "gconfirm") return `<div class="scrim" data-act="close"><div class="dlg" role="alertdialog"><h2>Удалить этот шаг?</h2><p>${esc(guideSteps()[modal.idx].title || "")}</p><div class="row"><button type="button" class="btn" data-act="close" autofocus>Отмена</button><button type="button" class="btn primary" data-act="gdelok">Да, удалить</button></div></div></div>`;
+  if (modal.type === "step") {
+    const st = modal.idx == null ? {title: "", text: ""} : guideSteps()[modal.idx];
+    const src = modal.img ? (localImgs[modal.img] || modal.img) : "";
+    return `<div class="scrim" data-act="close"><form class="dlg" data-form="step"><h2>${modal.idx == null ? "Новый шаг" : "Изменить шаг"}</h2><label for="gt">Заголовок</label><input id="gt" value="${esc(st.title || "")}" autocomplete="off" autofocus><label for="gx">Текст</label><textarea id="gx">${esc(st.text || "")}</textarea><label for="gf">Картинка (необязательно)</label><input id="gf" type="file" accept="image/*"><img class="prev" id="gprev" alt="" ${src ? `src="${esc(src)}"` : "hidden"}><div class="row" style="justify-content:flex-start"><button type="button" class="btn" data-act="grm">Убрать картинку</button></div><p class="err" id="err"></p><div class="row">${modal.idx == null ? "" : `<button type="button" class="btn danger spacer" data-act="gdel">Удалить шаг</button>`}<button type="button" class="btn" data-act="close">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></form></div>`;
+  }
   const u = modal.idx == null ? {name: "", url: ""} : DATA.users[modal.idx];
   return `<div class="scrim" data-act="close"><form class="dlg" data-form="user"><h2>${modal.idx == null ? "Новый человек" : "Изменить"}</h2><label for="nm">Имя</label><input id="nm" value="${esc(u.name)}" autocomplete="off" autofocus><label for="ur">Ссылка</label><input id="ur" value="${esc(u.url)}" autocomplete="off" inputmode="url"><p class="err" id="err"></p><div class="row">${modal.idx == null ? "" : `<button type="button" class="btn danger spacer" data-act="del">Удалить</button>`}<button type="button" class="btn" data-act="close">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></form></div>`;
 }
@@ -174,6 +187,7 @@ function render() {
     <div class="card"><table><thead><tr><th>Имя</th><th class="act">Ссылка</th></tr></thead><tbody id="rows">${rowsHtml()}</tbody></table></div>
   </div>${modalHtml()}`;
   const f = app.querySelector("[autofocus]"); if (f) f.focus();
+  if (document.body.classList.contains("open")) buildGuide();
 }
 
 async function copyText(t) {
@@ -202,11 +216,19 @@ app.addEventListener("click", async e => {
   else if (act === "close") { modal = null; render(); }
   else if (act === "del") { modal = {type: "confirm", idx: +(i ?? modal.idx)}; render(); }
   else if (act === "delok") { DATA.users.splice(modal.idx, 1); modal = null; persist(); }
+  else if (act === "gdel") { modal = {type: "gconfirm", idx: modal.idx}; render(); }
+  else if (act === "gdelok") { DATA.guide.splice(modal.idx, 1); modal = null; persist(); }
+  else if (act === "grm") {
+    modal.img = ""; modal.file = null;
+    document.getElementById("gf").value = "";
+    const pv = document.getElementById("gprev"); pv.hidden = true; pv.removeAttribute("src");
+  }
 });
 
 app.addEventListener("submit", async e => {
   e.preventDefault();
   const form = e.target.dataset.form, err = document.getElementById("err");
+  if (form === "step") { await submitStep(err); return; }
   if (form === "login") {
     const t = document.getElementById("pw").value.trim();
     if (!t) { err.textContent = "Вставьте токен."; return; }
@@ -224,6 +246,56 @@ app.addEventListener("submit", async e => {
   }
 });
 
+const localImgs = {};
+const guideSteps = () => Array.isArray(DATA.guide) ? DATA.guide : DEFAULT_GUIDE;
+function ensureGuide() { if (!Array.isArray(DATA.guide)) DATA.guide = DEFAULT_GUIDE.map(x => ({...x})); }
+function buildGuide() {
+  const body = document.getElementById("gBody"), top = body.scrollTop, steps = guideSteps();
+  body.innerHTML = (admin ? `<div class="gadmin"><button class="btn primary" data-act="gadd">+ Добавить шаг</button></div>` : "")
+    + (admin && msg ? `<p class="${msgOk ? "note" : "err"}" role="status">${esc(msg)}</p>` : "")
+    + (steps.length ? steps.map((x, n) => `<div class="step"><h3>${n + 1}. ${esc(x.title || "")}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}${x.image ? `<img src="${esc(localImgs[x.image] || x.image)}" alt="" loading="lazy">` : ""}${admin ? `<button class="btn gedit" data-act="gedit" data-i="${n}">Изменить</button>` : ""}</div>`).join("") : `<p class="sub">Инструкция пока пуста.</p>`);
+  body.querySelectorAll("img").forEach(im => im.addEventListener("error", () => im.remove()));
+  body.scrollTop = top;
+}
+async function uploadImage(file) {
+  apiUrl();
+  const bmp = await createImageBitmap(file), k = Math.min(1, 1200 / bmp.width);
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.88));
+  const dataUrl = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(blob); });
+  const path = "guide/img-" + Date.now() + ".jpg";
+  const body = {message: "Картинка для инструкции", content: dataUrl.split(",")[1]};
+  if (CFG.branch) body.branch = CFG.branch;
+  await gh(`https://api.github.com/repos/${repo()}/contents/${path}`, {method: "PUT", body: JSON.stringify(body)});
+  localImgs[path] = dataUrl;
+  return path;
+}
+async function submitStep(err) {
+  const title = document.getElementById("gt").value.trim(), text = document.getElementById("gx").value.trim();
+  if (!title) { err.textContent = "Введите заголовок шага."; return; }
+  let image = modal.img || "";
+  if (modal.file) {
+    err.textContent = "Загружаю картинку…";
+    try { image = await uploadImage(modal.file); }
+    catch (x) { err.textContent = "Не удалось загрузить картинку: " + x.message + "."; return; }
+  }
+  ensureGuide();
+  const st = {title, text, image};
+  if (modal.idx == null) DATA.guide.push(st); else DATA.guide[modal.idx] = st;
+  modal = null; persist();
+}
+document.getElementById("gBody").addEventListener("click", e => {
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  if (el.dataset.act === "gadd") { ensureGuide(); modal = {type: "step", idx: null, img: "", file: null}; render(); }
+  else if (el.dataset.act === "gedit") { ensureGuide(); const i = +el.dataset.i; modal = {type: "step", idx: i, img: DATA.guide[i].image || "", file: null}; render(); }
+});
+app.addEventListener("change", e => {
+  if (e.target.id !== "gf" || !modal) return;
+  const f = e.target.files[0]; modal.file = f || null;
+  const pv = document.getElementById("gprev");
+  if (f) { pv.src = URL.createObjectURL(f); pv.hidden = false; }
+});
 // Инструкция: шторка снизу. Скриншоты кладите в папку guide/ (1.png, 2.png, 3.png).
 const DEFAULT_GUIDE = [
   {title: "Найдите своё имя", text: "Введите имя в строку поиска или найдите себя в списке.", image: "guide/1.png"},
@@ -233,11 +305,7 @@ const DEFAULT_GUIDE = [
 const gOpen = document.getElementById("gOpen"), sheet = document.getElementById("sheet");
 function guideOpen(on) {
   if (on) {
-    const steps = Array.isArray(DATA.guide) && DATA.guide.length ? DATA.guide : DEFAULT_GUIDE;
-    const body = document.getElementById("gBody");
-    body.innerHTML = steps.map((s, n) => `<div class="step"><h3>${n + 1}. ${esc(s.title || "")}</h3><p>${esc(s.text || "")}</p>${s.image ? `<img src="${esc(s.image)}" alt="" loading="lazy">` : ""}</div>`).join("");
-    body.querySelectorAll("img").forEach(im => im.addEventListener("error", () => im.remove()));
-    body.scrollTop = 0; sheet.removeAttribute("inert");
+    buildGuide(); document.getElementById("gBody").scrollTop = 0; sheet.removeAttribute("inert");
   } else sheet.setAttribute("inert", "");
   document.body.classList.toggle("open", on);
   gOpen.setAttribute("aria-expanded", String(on));
@@ -248,8 +316,8 @@ document.getElementById("gClose").addEventListener("click", () => guideOpen(fals
 document.getElementById("gScrim").addEventListener("click", () => guideOpen(false));
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return;
-  if (document.body.classList.contains("open")) guideOpen(false);
-  else if (modal) { modal = null; render(); }
+  if (modal) { modal = null; render(); }
+  else if (document.body.classList.contains("open")) guideOpen(false);
 });
 
 (async () => {
