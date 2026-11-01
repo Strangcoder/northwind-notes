@@ -83,7 +83,9 @@ body.open{overflow:hidden}
 .status .st-text span{color:var(--muted);font-size:.95rem}
 .dot{width:14px;height:14px;border-radius:50%;flex:none;display:inline-block;background:var(--dot)}
 .st-green{--dot:#1fa463}.st-yellow{--dot:#e6a700}.st-red{--dot:#d9362b}
-.status .dot{width:16px;height:16px;box-shadow:0 0 0 5px color-mix(in srgb,var(--dot) 24%,transparent)}
+.status .dot{position:relative;width:16px;height:16px;box-shadow:0 0 0 4px color-mix(in srgb,var(--dot) 18%,transparent)}
+.status .dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--dot);opacity:0;animation:halo 2.6s ease-out infinite}
+@keyframes halo{0%{transform:scale(1);opacity:.55}70%,100%{transform:scale(2.8);opacity:0}}
 .statusctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:14px}
 .sbtn{display:inline-flex;align-items:center;gap:8px}
 .sbtn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
@@ -94,7 +96,7 @@ body.open{overflow:hidden}
 .gedit{margin-top:12px}
 .step p{white-space:pre-line}
 .step img{display:block;width:100%;max-width:360px;margin:12px auto 0;border-radius:12px;border:1px solid var(--line)}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}.status .dot::after{animation:none}}
 .note{color:var(--ok);margin:0 0 12px;font-weight:600}
 .hint{color:var(--muted);font-size:.92rem;margin:8px 0 0}
 </style>
