@@ -94,6 +94,13 @@ body.open{overflow:hidden}
 .tabs{display:flex;border-bottom:1px solid var(--line)}
 .tab{flex:1;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font-weight:700;padding:14px 8px;min-height:50px}
 .tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
+.tabs{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tabs[hidden]{display:none}
+.tab{flex:1 0 auto;white-space:nowrap;padding:14px 16px}
+.gadmin{display:flex;flex-wrap:wrap;gap:8px}
+.step p{overflow-wrap:anywhere}
+.step a{color:var(--accent);font-weight:600}
 @media(max-width:560px){.status{flex-wrap:wrap}.status .btn{width:100%;min-height:46px}}
 .gedit{margin-top:12px}
 .step p{white-space:pre-line}
@@ -109,7 +116,7 @@ body.open{overflow:hidden}
 <div class="sheet-scrim" id="gScrim"></div>
 <section class="sheet" id="sheet" role="dialog" aria-label="Инструкция" inert>
 <div class="sheet-head"><h2>Инструкция</h2><button class="btn" id="gClose">Закрыть</button></div>
-<div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="install" aria-selected="true">Как установить</button><button class="tab" role="tab" data-tab="update" aria-selected="false" tabindex="-1">Как обновить</button></div>
+<div class="tabs" role="tablist" id="gTabs"></div>
 <div class="sheet-body" id="gBody"></div>
 </section>
 
@@ -184,6 +191,11 @@ function modalHtml() {
   if (!modal) return "";
   if (modal.type === "login") return `<div class="scrim" data-act="close"><form class="dlg" data-form="login"><h2>Вход для администратора</h2><label for="pw">Токен доступа GitHub</label><input id="pw" type="password" autocomplete="off" autofocus><p class="hint">Вставьте токен один раз: он сохранится только в этом браузере.</p><p class="err" id="err"></p><div class="row"><button type="button" class="btn" data-act="close">Отмена</button><button class="btn primary" type="submit">Войти</button></div></form></div>`;
   if (modal.type === "confirm") return `<div class="scrim" data-act="close"><div class="dlg" role="alertdialog"><h2>Удалить из списка?</h2><p>${esc(DATA.users[modal.idx].name)}</p><div class="row"><button type="button" class="btn" data-act="close" autofocus>Отмена</button><button type="button" class="btn primary" data-act="delok">Да, удалить</button></div></div></div>`;
+  if (modal.type === "sec") {
+    const nm = modal.idx == null ? "" : sections()[modal.idx].name;
+    return `<div class="scrim" data-act="close"><form class="dlg" data-form="sec"><h2>${modal.idx == null ? "Новый раздел" : "Изменить раздел"}</h2><label for="sn">Название</label><input id="sn" value="${esc(nm)}" autocomplete="off" autofocus><p class="err" id="err"></p><div class="row">${modal.idx == null ? "" : `<button type="button" class="btn danger spacer" data-act="sdel">Удалить раздел</button>`}<button type="button" class="btn" data-act="close">Отмена</button><button class="btn primary" type="submit">Сохранить</button></div></form></div>`;
+  }
+  if (modal.type === "sconfirm") return `<div class="scrim" data-act="close"><div class="dlg" role="alertdialog"><h2>Удалить раздел целиком?</h2><p>${esc(sections()[modal.idx].name)}: раздел и все его шаги будут удалены.</p><div class="row"><button type="button" class="btn" data-act="close" autofocus>Отмена</button><button type="button" class="btn primary" data-act="sdelok">Да, удалить</button></div></div></div>`;
   if (modal.type === "gconfirm") return `<div class="scrim" data-act="close"><div class="dlg" role="alertdialog"><h2>Удалить этот шаг?</h2><p>${esc(guideSteps()[modal.idx].title || "")}</p><div class="row"><button type="button" class="btn" data-act="close" autofocus>Отмена</button><button type="button" class="btn primary" data-act="gdelok">Да, удалить</button></div></div></div>`;
   if (modal.type === "step") {
     const st = modal.idx == null ? {title: "", text: ""} : guideSteps()[modal.idx];
@@ -237,9 +249,11 @@ app.addEventListener("click", async e => {
   else if (act === "del") { modal = {type: "confirm", idx: +(i ?? modal.idx)}; render(); }
   else if (act === "delok") { DATA.users.splice(modal.idx, 1); modal = null; persist(); }
   else if (act === "gdel") { modal = {type: "gconfirm", idx: modal.idx}; render(); }
-  else if (act === "gdelok") { DATA.guide[gTab].splice(modal.idx, 1); modal = null; persist(); }
+  else if (act === "gdelok") { ensureSections(); DATA.sections[gIdx].steps.splice(modal.idx, 1); modal = null; persist(); }
+  else if (act === "sdel") { modal = {type: "sconfirm", idx: modal.idx}; render(); }
+  else if (act === "sdelok") { ensureSections(); DATA.sections.splice(modal.idx, 1); gIdx = 0; modal = null; persist(); }
   else if (act === "status") { if (el.dataset.v) DATA.status = el.dataset.v; else delete DATA.status; persist(); }
-  else if (act === "gupdate") { setTab("update"); guideOpen(true); }
+  else if (act === "gupdate") { gIdx = Math.max(0, sections().findIndex(x => /обнов/i.test(x.name))); guideOpen(true); }
   else if (act === "grm") {
     modal.img = ""; modal.file = null;
     document.getElementById("gf").value = "";
@@ -251,6 +265,13 @@ app.addEventListener("submit", async e => {
   e.preventDefault();
   const form = e.target.dataset.form, err = document.getElementById("err");
   if (form === "step") { await submitStep(err); return; }
+  if (form === "sec") {
+    const name = document.getElementById("sn").value.trim();
+    if (!name) { err.textContent = "Введите название раздела."; return; }
+    ensureSections();
+    if (modal.idx == null) { DATA.sections.push({name, steps: []}); gIdx = DATA.sections.length - 1; } else DATA.sections[modal.idx].name = name;
+    modal = null; persist(); return;
+  }
   if (form === "login") {
     const t = document.getElementById("pw").value.trim();
     if (!t) { err.textContent = "Вставьте токен."; return; }
@@ -282,25 +303,36 @@ const DEFAULT_UPDATE = [
   {title: "Найдите своё имя", text: "Введите имя в строку поиска или найдите себя в списке.", image: ""},
   {title: "Скопируйте новую ссылку", text: "Нажмите «Копировать ссылку» и вставьте её вместо старой.", image: ""}
 ];
-let gTab = "install";
-const guideSteps = () => {
+let gIdx = 0;
+const cpSteps = a => a.map(x => ({...x}));
+function legacySections() {
   const g = DATA.guide;
-  if (Array.isArray(g)) return gTab === "install" ? g : DEFAULT_UPDATE;
-  if (g && Array.isArray(g[gTab])) return g[gTab];
-  return gTab === "install" ? DEFAULT_GUIDE : DEFAULT_UPDATE;
-};
-function ensureGuide() {
-  const g = DATA.guide, cp = a => a.map(x => ({...x}));
-  if (g && !Array.isArray(g) && typeof g === "object") {
-    if (!Array.isArray(g.install)) g.install = cp(DEFAULT_GUIDE);
-    if (!Array.isArray(g.update)) g.update = cp(DEFAULT_UPDATE);
-  } else DATA.guide = {install: Array.isArray(g) ? g : cp(DEFAULT_GUIDE), update: cp(DEFAULT_UPDATE)};
+  const inst = Array.isArray(g) ? g : (g && Array.isArray(g.install) ? g.install : DEFAULT_GUIDE);
+  const upd = g && !Array.isArray(g) && Array.isArray(g.update) ? g.update : DEFAULT_UPDATE;
+  return [{name: "Как установить", steps: inst}, {name: "Как обновить", steps: upd}];
 }
+const sections = () => Array.isArray(DATA.sections) ? DATA.sections : legacySections();
+function ensureSections() {
+  if (Array.isArray(DATA.sections)) return;
+  DATA.sections = legacySections().map(x => ({name: x.name, steps: cpSteps(x.steps)}));
+  delete DATA.guide;
+}
+const guideSteps = () => (sections()[gIdx] || {steps: []}).steps;
+const linkify = t => t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|https?:\/\/[^\s<]+/g, (m, label, url) => {
+  if (label) return `<a href="${url}" target="_blank" rel="noopener">${label}</a>`;
+  const tail = (m.match(/[.,;:!?)»]+$/) || [""])[0], u = tail ? m.slice(0, -tail.length) : m;
+  return `<a href="${u}" target="_blank" rel="noopener">${u}</a>${tail}`;
+});
 function buildGuide() {
-  const body = document.getElementById("gBody"), top = body.scrollTop, steps = guideSteps();
-  body.innerHTML = (admin ? `<div class="gadmin"><button class="btn primary" data-act="gadd">+ Добавить шаг</button></div>` : "")
+  const body = document.getElementById("gBody"), tabs = document.getElementById("gTabs"), top = body.scrollTop, sc = sections();
+  if (gIdx >= sc.length) gIdx = Math.max(0, sc.length - 1);
+  const steps = guideSteps();
+  tabs.hidden = !sc.length;
+  tabs.innerHTML = sc.map((x, n) => `<button class="tab" role="tab" data-i="${n}" aria-selected="${n === gIdx}" tabindex="${n === gIdx ? 0 : -1}">${esc(x.name)}</button>`).join("");
+  const on = tabs.querySelector('[aria-selected="true"]'); if (on) tabs.scrollLeft = Math.max(0, on.offsetLeft - 16);
+  body.innerHTML = (admin ? `<div class="gadmin">${sc.length ? `<button class="btn primary" data-act="gadd">+ Шаг</button><button class="btn" data-act="secedit">Изменить раздел</button>` : ""}<button class="btn${sc.length ? "" : " primary"}" data-act="secadd">+ Раздел</button></div>` : "")
     + (admin && msg ? `<p class="${msgOk ? "note" : "err"}" role="status">${esc(msg)}</p>` : "")
-    + (steps.length ? steps.map((x, n) => `<div class="step"><h3>${n + 1}. ${esc(x.title || "")}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}${x.image ? `<img src="${esc(localImgs[x.image] || x.image)}" alt="" loading="lazy">` : ""}${admin ? `<button class="btn gedit" data-act="gedit" data-i="${n}">Изменить</button>` : ""}</div>`).join("") : `<p class="sub">Инструкция пока пуста.</p>`);
+    + (steps.length ? steps.map((x, n) => `<div class="step"><h3>${n + 1}. ${esc(x.title || "")}</h3>${x.text ? `<p>${linkify(esc(x.text))}</p>` : ""}${x.image ? `<img src="${esc(localImgs[x.image] || x.image)}" alt="" loading="lazy">` : ""}${admin ? `<button class="btn gedit" data-act="gedit" data-i="${n}">Изменить</button>` : ""}</div>`).join("") : `<p class="sub">${sc.length ? "В этом разделе пока нет шагов." : "Инструкция пока пуста."}</p>`);
   body.querySelectorAll("img").forEach(im => im.addEventListener("error", () => im.remove()));
   body.scrollTop = top;
 }
@@ -327,15 +359,22 @@ async function submitStep(err) {
     try { image = await uploadImage(modal.file); }
     catch (x) { err.textContent = "Не удалось загрузить картинку: " + x.message + "."; return; }
   }
-  ensureGuide();
+  ensureSections();
   const st = {title, text, image};
-  if (modal.idx == null) DATA.guide[gTab].push(st); else DATA.guide[gTab][modal.idx] = st;
+  if (modal.idx == null) DATA.sections[gIdx].steps.push(st); else DATA.sections[gIdx].steps[modal.idx] = st;
   modal = null; persist();
 }
 document.getElementById("gBody").addEventListener("click", e => {
   const el = e.target.closest("[data-act]"); if (!el) return;
-  if (el.dataset.act === "gadd") { ensureGuide(); modal = {type: "step", idx: null, img: "", file: null}; render(); }
-  else if (el.dataset.act === "gedit") { ensureGuide(); const i = +el.dataset.i; modal = {type: "step", idx: i, img: DATA.guide[gTab][i].image || "", file: null}; render(); }
+  const a = el.dataset.act;
+  if (a === "gadd") { ensureSections(); modal = {type: "step", idx: null, img: "", file: null}; render(); }
+  else if (a === "gedit") { ensureSections(); const i = +el.dataset.i; modal = {type: "step", idx: i, img: DATA.sections[gIdx].steps[i].image || "", file: null}; render(); }
+  else if (a === "secadd") { modal = {type: "sec", idx: null}; render(); }
+  else if (a === "secedit") { modal = {type: "sec", idx: gIdx}; render(); }
+});
+document.getElementById("gTabs").addEventListener("click", e => {
+  const b = e.target.closest(".tab"); if (!b) return;
+  gIdx = +b.dataset.i; buildGuide(); document.getElementById("gBody").scrollTop = 0;
 });
 app.addEventListener("change", e => {
   if (e.target.id !== "gf" || !modal) return;
@@ -358,12 +397,7 @@ function guideOpen(on) {
   gOpen.setAttribute("aria-expanded", String(on));
   (on ? document.getElementById("gClose") : gOpen).focus();
 }
-function setTab(t) {
-  gTab = t;
-  document.querySelectorAll(".tab").forEach(b => { const on = b.dataset.tab === t; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; });
-}
-document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { setTab(b.dataset.tab); buildGuide(); document.getElementById("gBody").scrollTop = 0; }));
-gOpen.addEventListener("click", () => { setTab("install"); guideOpen(true); });
+gOpen.addEventListener("click", () => { gIdx = 0; guideOpen(true); });
 document.getElementById("gClose").addEventListener("click", () => guideOpen(false));
 document.getElementById("gScrim").addEventListener("click", () => guideOpen(false));
 document.addEventListener("keydown", e => {
