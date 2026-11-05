@@ -91,17 +91,6 @@ body.open{overflow:hidden}
 .statusctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:14px}
 .sbtn{display:inline-flex;align-items:center;gap:8px}
 .sbtn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
-.secs{display:flex;gap:8px;padding:12px 18px 12px}
-.sec{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;padding:10px 8px;font-weight:700;font-size:.95rem;min-height:46px}
-.sec[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.dl{margin:16px 0 4px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
-.dl h3{margin:0 0 10px;font-size:1.05rem}
-.dlrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
-.dlrow:first-of-type{border-top:0}
-.dlrow div{display:flex;flex-direction:column;min-width:0}
-.dlrow span{color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
-.dlrow .btn{text-decoration:none;text-align:center;min-width:130px;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
-@media(max-width:560px){.dlrow .btn{width:100%}}
 .tabs{display:flex;border-bottom:1px solid var(--line)}
 .tab{flex:1;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font-weight:700;padding:14px 8px;min-height:50px}
 .tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
@@ -120,7 +109,6 @@ body.open{overflow:hidden}
 <div class="sheet-scrim" id="gScrim"></div>
 <section class="sheet" id="sheet" role="dialog" aria-label="Инструкция" inert>
 <div class="sheet-head"><h2>Инструкция</h2><button class="btn" id="gClose">Закрыть</button></div>
-<div class="secs" role="group" aria-label="Раздел инструкции"><button class="sec" data-sec="main" aria-pressed="true">Основной доступ</button><button class="sec" data-sec="tunnel" aria-pressed="false">Обход российских сайтов</button></div>
 <div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="install" aria-selected="true">Как установить</button><button class="tab" role="tab" data-tab="update" aria-selected="false" tabindex="-1">Как обновить</button></div>
 <div class="sheet-body" id="gBody"></div>
 </section>
@@ -249,9 +237,9 @@ app.addEventListener("click", async e => {
   else if (act === "del") { modal = {type: "confirm", idx: +(i ?? modal.idx)}; render(); }
   else if (act === "delok") { DATA.users.splice(modal.idx, 1); modal = null; persist(); }
   else if (act === "gdel") { modal = {type: "gconfirm", idx: modal.idx}; render(); }
-  else if (act === "gdelok") { DATA[GKEY[gSec]][gTab].splice(modal.idx, 1); modal = null; persist(); }
+  else if (act === "gdelok") { DATA.guide[gTab].splice(modal.idx, 1); modal = null; persist(); }
   else if (act === "status") { if (el.dataset.v) DATA.status = el.dataset.v; else delete DATA.status; persist(); }
-  else if (act === "gupdate") { setSec("main"); setTab("update"); guideOpen(true); }
+  else if (act === "gupdate") { setTab("update"); guideOpen(true); }
   else if (act === "grm") {
     modal.img = ""; modal.file = null;
     document.getElementById("gf").value = "";
@@ -295,42 +283,24 @@ const DEFAULT_UPDATE = [
   {title: "Скопируйте новую ссылку", text: "Нажмите «Копировать ссылку» и вставьте её вместо старой.", image: ""}
 ];
 let gTab = "install";
-const DEFAULT_TUN_INSTALL = [
-  {title: "Скачайте файл", text: "Нажмите «Скачать» в блоке выше для своего устройства: для iPhone, iPad и Android или для компьютера. Файл сохранится в загрузки.", image: ""},
-  {title: "Импортируйте файл в приложение", text: "Откройте приложение, перейдите в настройки раздельного туннелирования (Split tunneling) и импортируйте скачанный файл.", image: ""}
-];
-const DEFAULT_TUN_UPDATE = [
-  {title: "Скачайте свежий файл", text: "Нажмите «Скачать» ещё раз: ссылки всегда ведут на последнюю версию файла.", image: ""},
-  {title: "Импортируйте заново", text: "В настройках раздельного туннелирования импортируйте новый файл вместо старого.", image: ""}
-];
-const DOWNLOADS = [
-  {label: "iPhone, iPad и Android", file: "amnezia-ip-lite.json", url: "https://github.com/lib4u/amnezia-tunneling-ru/releases/download/latest/amnezia-ip-lite.json"},
-  {label: "Компьютер (ПК)", file: "amnezia-ip.json", url: "https://github.com/lib4u/amnezia-tunneling-ru/releases/download/latest/amnezia-ip.json"}
-];
-function dlHtml() {
-  return `<div class="dl"><h3>Скачайте файл для своего устройства</h3>${DOWNLOADS.map(d => `<div class="dlrow"><div><strong>${esc(d.label)}</strong><span>${esc(d.file)}</span></div><a class="btn primary" href="${esc(d.url)}" download rel="noopener">Скачать</a></div>`).join("")}</div>`;
-}
-let gSec = "main";
-const GKEY = {main: "guide", tunnel: "guideTunnel"};
-const DEFAULTS = {main: {install: DEFAULT_GUIDE, update: DEFAULT_UPDATE}, tunnel: {install: DEFAULT_TUN_INSTALL, update: DEFAULT_TUN_UPDATE}};
 const guideSteps = () => {
-  const g = DATA[GKEY[gSec]];
-  if (Array.isArray(g)) return gTab === "install" ? g : DEFAULTS[gSec].update;
+  const g = DATA.guide;
+  if (Array.isArray(g)) return gTab === "install" ? g : DEFAULT_UPDATE;
   if (g && Array.isArray(g[gTab])) return g[gTab];
-  return DEFAULTS[gSec][gTab];
+  return gTab === "install" ? DEFAULT_GUIDE : DEFAULT_UPDATE;
 };
 function ensureGuide() {
-  const k = GKEY[gSec], g = DATA[k], cp = a => a.map(x => ({...x})), D = DEFAULTS[gSec];
+  const g = DATA.guide, cp = a => a.map(x => ({...x}));
   if (g && !Array.isArray(g) && typeof g === "object") {
-    if (!Array.isArray(g.install)) g.install = cp(D.install);
-    if (!Array.isArray(g.update)) g.update = cp(D.update);
-  } else DATA[k] = {install: Array.isArray(g) ? g : cp(D.install), update: cp(D.update)};
+    if (!Array.isArray(g.install)) g.install = cp(DEFAULT_GUIDE);
+    if (!Array.isArray(g.update)) g.update = cp(DEFAULT_UPDATE);
+  } else DATA.guide = {install: Array.isArray(g) ? g : cp(DEFAULT_GUIDE), update: cp(DEFAULT_UPDATE)};
 }
 function buildGuide() {
   const body = document.getElementById("gBody"), top = body.scrollTop, steps = guideSteps();
   body.innerHTML = (admin ? `<div class="gadmin"><button class="btn primary" data-act="gadd">+ Добавить шаг</button></div>` : "")
     + (admin && msg ? `<p class="${msgOk ? "note" : "err"}" role="status">${esc(msg)}</p>` : "")
-    + (gSec === "tunnel" ? dlHtml() : "") + (steps.length ? steps.map((x, n) => `<div class="step"><h3>${n + 1}. ${esc(x.title || "")}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}${x.image ? `<img src="${esc(localImgs[x.image] || x.image)}" alt="" loading="lazy">` : ""}${admin ? `<button class="btn gedit" data-act="gedit" data-i="${n}">Изменить</button>` : ""}</div>`).join("") : `<p class="sub">Инструкция пока пуста.</p>`);
+    + (steps.length ? steps.map((x, n) => `<div class="step"><h3>${n + 1}. ${esc(x.title || "")}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}${x.image ? `<img src="${esc(localImgs[x.image] || x.image)}" alt="" loading="lazy">` : ""}${admin ? `<button class="btn gedit" data-act="gedit" data-i="${n}">Изменить</button>` : ""}</div>`).join("") : `<p class="sub">Инструкция пока пуста.</p>`);
   body.querySelectorAll("img").forEach(im => im.addEventListener("error", () => im.remove()));
   body.scrollTop = top;
 }
@@ -359,13 +329,13 @@ async function submitStep(err) {
   }
   ensureGuide();
   const st = {title, text, image};
-  if (modal.idx == null) DATA[GKEY[gSec]][gTab].push(st); else DATA[GKEY[gSec]][gTab][modal.idx] = st;
+  if (modal.idx == null) DATA.guide[gTab].push(st); else DATA.guide[gTab][modal.idx] = st;
   modal = null; persist();
 }
 document.getElementById("gBody").addEventListener("click", e => {
   const el = e.target.closest("[data-act]"); if (!el) return;
   if (el.dataset.act === "gadd") { ensureGuide(); modal = {type: "step", idx: null, img: "", file: null}; render(); }
-  else if (el.dataset.act === "gedit") { ensureGuide(); const i = +el.dataset.i; modal = {type: "step", idx: i, img: DATA[GKEY[gSec]][gTab][i].image || "", file: null}; render(); }
+  else if (el.dataset.act === "gedit") { ensureGuide(); const i = +el.dataset.i; modal = {type: "step", idx: i, img: DATA.guide[gTab][i].image || "", file: null}; render(); }
 });
 app.addEventListener("change", e => {
   if (e.target.id !== "gf" || !modal) return;
@@ -393,12 +363,7 @@ function setTab(t) {
   document.querySelectorAll(".tab").forEach(b => { const on = b.dataset.tab === t; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; });
 }
 document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { setTab(b.dataset.tab); buildGuide(); document.getElementById("gBody").scrollTop = 0; }));
-function setSec(k) {
-  gSec = k;
-  document.querySelectorAll(".sec").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sec === k)));
-}
-document.querySelectorAll(".sec").forEach(b => b.addEventListener("click", () => { setSec(b.dataset.sec); setTab("install"); buildGuide(); document.getElementById("gBody").scrollTop = 0; }));
-gOpen.addEventListener("click", () => { setSec("main"); setTab("install"); guideOpen(true); });
+gOpen.addEventListener("click", () => { setTab("install"); guideOpen(true); });
 document.getElementById("gClose").addEventListener("click", () => guideOpen(false));
 document.getElementById("gScrim").addEventListener("click", () => guideOpen(false));
 document.addEventListener("keydown", e => {
